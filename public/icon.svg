@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cimbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#990000" />
+      <stop offset="50%" stop-color="#E31B23" />
+      <stop offset="100%" stop-color="#7F1416" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="108" fill="url(#cimbGrad)" />
+
+  <!-- Subtle inner border -->
+  <rect x="12" y="12" width="488" height="488" rx="98" fill="none" stroke="#ffffff" stroke-opacity="0.15" stroke-width="4" />
+
+  <!-- CIMB Emblem / Octagonal Forward Chevrons -->
+  <g filter="url(#shadow)">
+    <!-- Main Emblem Block -->
+    <path d="M120 148 L256 92 L392 148 L392 364 L256 420 L120 364 Z" fill="#ffffff" />
+    <path d="M140 162 L256 114 L372 162 L372 350 L256 398 L140 350 Z" fill="#8B0000" />
+    <!-- Dynamic Forward Slanted Blades -->
+    <path d="M175 190 L245 190 L337 322 L267 322 Z" fill="#ffffff" />
+    <path d="M255 190 L325 190 L285 248 L215 248 Z" fill="#E31B23" />
+    <path d="M227 264 L297 264 L257 322 L187 322 Z" fill="#FF4D4D" />
+  </g>
+</svg>

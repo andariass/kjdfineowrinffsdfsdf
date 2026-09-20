@@ -1,0 +1,8 @@
+{
+  "name": "CIMB Cash Plus v4.1.0",
+  "description": "Aplikasi permohonan pinjaman peribadi CIMB Cash Plus, pemantauan status pinjaman, pengurusan bil ansuran bulanan, dan pengesahan pembayaran.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

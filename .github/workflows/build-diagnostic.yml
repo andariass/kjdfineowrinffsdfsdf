@@ -1,0 +1,48 @@
+name: vercel-preflight
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Verify npm
+        run: |
+          node --version
+          npm --version
+          test "$(node -p "process.versions.node.split('.')[0]")" = "24"
+          test "$(npm --version)" = "11.19.0"
+
+      - name: Require committed lockfile
+        run: test -f package-lock.json
+
+      - name: Clean reproducible install
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build

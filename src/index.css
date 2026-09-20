@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-red: #E31B23;
+  --color-red-dark: #B5121B;
+  --color-red-light: #FDEBEC;
+
+  --color-bg-base: #F7F7F8;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #17181B;
+  --color-text-secondary: #686B73;
+  --color-border-custom: #E4E5E8;
+
+  --color-success: #16834B;
+  --color-warning: #B86E00;
+  --color-error: #D92D20;
+
+  --radius-card: 16px;
+  --radius-hero: 20px;
+  --radius-input: 12px;
+  --radius-button: 12px;
+  --radius-pill: 999px;
+}
+
+:root {
+  --color-brand-red: #E31B23;
+  --color-red-dark: #B5121B;
+  --color-red-light: #FDEBEC;
+
+  --color-bg: #F7F7F8;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #17181B;
+  --color-text-secondary: #686B73;
+  --color-border: #E4E5E8;
+
+  --color-success: #16834B;
+  --color-warning: #B86E00;
+  --color-error: #D92D20;
+
+  --page-padding: 16px;
+  --section-gap: 24px;
+  --card-gap: 12px;
+
+  --radius-card: 16px;
+  --radius-hero: 20px;
+  --radius-input: 12px;
+  --radius-button: 12px;
+  --radius-pill: 999px;
+
+  --button-height: 52px;
+  --input-height: 52px;
+  --header-height: 56px;
+  --bottom-nav-height: 72px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #F7F7F8;
+  color: #17181B;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E4E5E8;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #686B73;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
