@@ -25,7 +25,37 @@ export type CimbAction =
   | 'check-pin'
   | 'set-pin'
   | 'withdraw'
-  | 'review-withdrawal';
+  | 'review-withdrawal'
+  | 'call-create'
+  | 'call-accept'
+  | 'call-reject'
+  | 'call-end';
+
+export type CimbCallStatus = 'ringing' | 'accepted' | 'rejected' | 'missed' | 'ended' | 'failed';
+
+export interface CimbCall {
+  id: string;
+  caller_phone: string;
+  receiver_phone: string;
+  status: CimbCallStatus;
+  created_at: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  duration_seconds?: number | null;
+  ended_by?: string | null;
+  end_reason?: string | null;
+  last_activity_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface CimbCallEvent {
+  id: string;
+  call_id: string;
+  actor_phone: string;
+  event_type: string;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+}
 
 export interface CimbPushSubscription {
   id: string;
@@ -179,6 +209,8 @@ export interface ApiSuccess<T = unknown> {
   message?: string;
   withdrawal?: Withdrawal;
   bill?: Bill;
+  access_token?: string;
+  call?: CimbCall;
 }
 
 export interface ApiError {
@@ -202,6 +234,7 @@ export interface RegisterRequest {
   name: string;
   phone: string;
   password: string;
+  avatar?: string;
   [key: string]: unknown;
 }
 

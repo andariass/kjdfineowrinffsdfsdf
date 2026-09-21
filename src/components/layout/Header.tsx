@@ -75,7 +75,16 @@ export const Header: React.FC<HeaderProps> = ({ title, showGreeting = true }) =>
               }`}
               aria-label="Profil Pengguna"
             >
-              <User className="w-3.5 h-3.5" />
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name || 'Profil'}
+                  className="w-4 h-4 rounded-full object-cover shrink-0 bg-white"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <User className="w-3.5 h-3.5" />
+              )}
               <span className="font-semibold hidden xs:inline">Profil</span>
             </Link>
           </div>

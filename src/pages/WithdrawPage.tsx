@@ -56,17 +56,17 @@ export const WithdrawPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastCreatedWithdrawal, setLastCreatedWithdrawal] = useState<Withdrawal | null>(null);
 
-  // Available balance
+  // Available balance (Schema-driven using available user data only)
   const availableBalance = useMemo(() => {
     if (!user) return 0;
-    if (typeof user.balance === 'number' && user.balance > 0) return user.balance;
-    if (typeof user.loan_approved_amount === 'number' && user.loan_approved_amount > 0) {
+    if (typeof user.balance === 'number') return user.balance;
+    if (typeof user.loan_approved_amount === 'number') {
       return user.loan_approved_amount;
     }
-    if (typeof user.loan_amount === 'number' && user.loan_amount > 0) {
+    if (typeof user.loan_amount === 'number') {
       return user.loan_amount;
     }
-    return 10000; // default initial demo balance
+    return 0;
   }, [user]);
 
   // Withdrawals history

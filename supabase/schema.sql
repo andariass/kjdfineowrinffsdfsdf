@@ -187,6 +187,39 @@ BEGIN
   END IF;
 END $$;
 
+-- 8. Table: cimb_calls & cimb_call_events (Voice Call Feature)
+CREATE TABLE IF NOT EXISTS public.cimb_calls (
+  id text NOT NULL PRIMARY KEY,
+  caller_phone text NOT NULL,
+  receiver_phone text NOT NULL DEFAULT 'CIMB_OFFICER',
+  status text NOT NULL DEFAULT 'ringing',
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  started_at timestamp with time zone,
+  ended_at timestamp with time zone,
+  duration_seconds integer DEFAULT 0,
+  ended_by text,
+  end_reason text,
+  last_activity_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cimb_calls_caller ON public.cimb_calls(caller_phone);
+CREATE INDEX IF NOT EXISTS idx_cimb_calls_status ON public.cimb_calls(status);
+
+ALTER TABLE public.cimb_calls ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public access for cimb_calls" ON public.cimb_calls;
+CREATE POLICY "Public access for cimb_calls" ON public.cimb_calls FOR ALL USING (true) WITH CHECK (true);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'cimb_calls'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.cimb_calls;
+  END IF;
+END $$;
+
 
 -- Note:
 -- The Edge Function uses SUPABASE_SERVICE_ROLE_KEY to interact with cimb_users and storage.

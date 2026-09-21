@@ -11,8 +11,9 @@ import {
   LoginRequest,
   CheckResponse,
   Bill,
+  CimbCall,
 } from '../types';
-import { getSupabaseClient } from '../lib/supabase';
+import { getSupabaseClient, getCustomAccessToken } from '../lib/supabase';
 
 export const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || 'https://oszqantvugvbvydlizix.supabase.co';
@@ -47,9 +48,10 @@ export async function cimbRequest<T = unknown>(
     }
   }
 
+  const customToken = getCustomAccessToken();
   const defaultHeaders: Record<string, string> = {
     apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    Authorization: customToken ? `Bearer ${customToken}` : `Bearer ${SUPABASE_ANON_KEY}`,
   };
 
   const headers: Record<string, string> = {
@@ -111,15 +113,18 @@ export const cimbApi = {
 
   /**
    * POST ?action=register
-   * Field wajib: name, phone, password (role otomatis 'user')
+   * Field wajib: name, phone, password (role otomatis 'user', default avatar: https://api.dicebear.com/9.x/initials/svg?seed=<name>)
    */
   async register(data: RegisterRequest): Promise<ApiResponse<CimbUser>> {
+    const trimmedName = data.name.trim();
+    const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(trimmedName)}`;
     return cimbRequest<CimbUser>('register', {
       method: 'POST',
       body: {
-        name: data.name.trim(),
+        name: trimmedName,
         phone: data.phone.trim(),
         password: data.password,
+        avatar: data.avatar || defaultAvatar,
       },
     });
   },
@@ -225,6 +230,108 @@ export const cimbApi = {
       method: 'POST',
       headers,
       body: formData,
+    });
+  },
+
+  /**
+   * POST ?action=call-create
+   * Initiates a voice call via Edge Function
+   */
+  async createCall(payload: {
+    receiver_phone: string;
+    phone?: string;
+    password?: string;
+  }): Promise<ApiResponse<{ call: CimbCall }>> {
+    const headers: Record<string, string> = {};
+    if (payload.phone) headers['x-phone'] = payload.phone.trim();
+    if (payload.password) headers['x-password'] = payload.password;
+
+    return cimbRequest<{ call: CimbCall }>('call-create', {
+      method: 'POST',
+      headers,
+      body: {
+        receiver_phone: payload.receiver_phone.trim(),
+        phone: payload.phone?.trim(),
+        password: payload.password,
+      },
+    });
+  },
+
+  /**
+   * POST ?action=call-accept
+   * Accepts an active ringing call
+   */
+  async acceptCall(payload: {
+    call_id: string;
+    phone?: string;
+    password?: string;
+  }): Promise<ApiResponse<{ call: CimbCall }>> {
+    const headers: Record<string, string> = {};
+    if (payload.phone) headers['x-phone'] = payload.phone.trim();
+    if (payload.password) headers['x-password'] = payload.password;
+
+    return cimbRequest<{ call: CimbCall }>('call-accept', {
+      method: 'POST',
+      headers,
+      body: {
+        call_id: payload.call_id,
+        phone: payload.phone?.trim(),
+        password: payload.password,
+      },
+    });
+  },
+
+  /**
+   * POST ?action=call-reject
+   * Rejects an active ringing call
+   */
+  async rejectCall(payload: {
+    call_id: string;
+    reason?: string;
+    phone?: string;
+    password?: string;
+  }): Promise<ApiResponse<{ call: CimbCall }>> {
+    const headers: Record<string, string> = {};
+    if (payload.phone) headers['x-phone'] = payload.phone.trim();
+    if (payload.password) headers['x-password'] = payload.password;
+
+    return cimbRequest<{ call: CimbCall }>('call-reject', {
+      method: 'POST',
+      headers,
+      body: {
+        call_id: payload.call_id,
+        reason: payload.reason || 'declined',
+        phone: payload.phone?.trim(),
+        password: payload.password,
+      },
+    });
+  },
+
+  /**
+   * POST ?action=call-end
+   * Ends an active or in-progress call
+   */
+  async endCall(payload: {
+    call_id: string;
+    reason?: string;
+    duration_seconds?: number;
+    phone?: string;
+    password?: string;
+  }): Promise<ApiResponse<{ call: CimbCall }>> {
+    const headers: Record<string, string> = {};
+    if (payload.phone) headers['x-phone'] = payload.phone.trim();
+    if (payload.password) headers['x-password'] = payload.password;
+
+    return cimbRequest<{ call: CimbCall }>('call-end', {
+      method: 'POST',
+      headers,
+      body: {
+        call_id: payload.call_id,
+        reason: payload.reason || 'completed',
+        duration_seconds: payload.duration_seconds || 0,
+        phone: payload.phone?.trim(),
+        password: payload.password,
+      },
     });
   },
 

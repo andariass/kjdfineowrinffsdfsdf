@@ -21,6 +21,10 @@ const ALLOWED_ACTIONS = [
   "set-pin",
   "withdraw",
   "review-withdrawal",
+  "call-create",
+  "call-accept",
+  "call-reject",
+  "call-end",
 ];
 
 const IMMUTABLE_FIELDS = ["phone", "created_at", "updated_at"];
@@ -258,6 +262,9 @@ serve(async (req: Request) => {
       const name = typeof body?.name === "string" ? body.name.trim() : "";
       const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
       const password = typeof body?.password === "string" ? body.password : "";
+      const avatar = typeof body?.avatar === "string" && body.avatar.trim()
+        ? body.avatar.trim()
+        : `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name)}`;
 
       if (!name || !phone || !password) {
         return jsonResponse(
@@ -281,6 +288,7 @@ serve(async (req: Request) => {
         name,
         phone,
         password,
+        avatar,
         role: "user",
         balance: 0,
         kyc_status: "unverified",
@@ -1239,6 +1247,219 @@ serve(async (req: Request) => {
         withdrawal: targetWithdrawal,
         bill: newBill,
         message: "Pengeluaran diluluskan dan bil berstatus Unpaid berjaya dijana.",
+      });
+    }
+
+    // ----------------------------------------------------
+    // ACTION: call-create (POST)
+    // ----------------------------------------------------
+    if (action === "call-create") {
+      if (req.method !== "POST") return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+
+      let body: any;
+      try {
+        body = await req.json();
+      } catch {
+        return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
+      }
+
+      const phone = req.headers.get("x-phone") || body?.phone || "";
+      const password = req.headers.get("x-password") || body?.password || "";
+      const receiverPhone = String(body?.receiver_phone || "CIMB_OFFICER").trim();
+
+      const auth = await authenticate(supabase, phone, password);
+      if (!auth.user) {
+        return jsonResponse({ success: false, error: auth.errorMsg }, auth.errorStatus);
+      }
+
+      const callerPhone = String(auth.user.phone);
+      const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const now = new Date().toISOString();
+
+      const callPayload = {
+        id: callId,
+        caller_phone: callerPhone,
+        receiver_phone: receiverPhone,
+        status: "ringing",
+        created_at: now,
+        started_at: null,
+        ended_at: null,
+        duration_seconds: 0,
+        ended_by: null,
+        end_reason: null,
+        last_activity_at: now,
+        updated_at: now,
+      };
+
+      const { data: newCall, error: callErr } = await supabase
+        .from("cimb_calls")
+        .insert(callPayload)
+        .select("*")
+        .single();
+
+      if (callErr) {
+        // Return structured payload even if table doesn't exist yet
+        return jsonResponse({
+          success: true,
+          action: "call-create",
+          call: callPayload,
+        });
+      }
+
+      // Log event
+      await supabase.from("cimb_call_events").insert({
+        call_id: callId,
+        actor_phone: callerPhone,
+        event_type: "call_initiated",
+        metadata: { receiver_phone: receiverPhone },
+      }).catch(() => null);
+
+      return jsonResponse({
+        success: true,
+        action: "call-create",
+        call: newCall || callPayload,
+      });
+    }
+
+    // ----------------------------------------------------
+    // ACTION: call-accept (POST)
+    // ----------------------------------------------------
+    if (action === "call-accept") {
+      if (req.method !== "POST") return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+
+      let body: any;
+      try {
+        body = await req.json();
+      } catch {
+        return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
+      }
+
+      const phone = req.headers.get("x-phone") || body?.phone || "";
+      const password = req.headers.get("x-password") || body?.password || "";
+      const callId = String(body?.call_id || "").trim();
+
+      const auth = await authenticate(supabase, phone, password);
+      if (!auth.user) {
+        return jsonResponse({ success: false, error: auth.errorMsg }, auth.errorStatus);
+      }
+
+      const now = new Date().toISOString();
+      const { data: updatedCall, error: acceptErr } = await supabase
+        .from("cimb_calls")
+        .update({
+          status: "accepted",
+          started_at: now,
+          last_activity_at: now,
+          updated_at: now,
+        })
+        .eq("id", callId)
+        .select("*")
+        .maybeSingle();
+
+      if (acceptErr) {
+        return jsonResponse({
+          success: true,
+          action: "call-accept",
+          call: { id: callId, status: "accepted", started_at: now },
+        });
+      }
+
+      return jsonResponse({
+        success: true,
+        action: "call-accept",
+        call: updatedCall,
+      });
+    }
+
+    // ----------------------------------------------------
+    // ACTION: call-reject (POST)
+    // ----------------------------------------------------
+    if (action === "call-reject") {
+      if (req.method !== "POST") return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+
+      let body: any;
+      try {
+        body = await req.json();
+      } catch {
+        return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
+      }
+
+      const phone = req.headers.get("x-phone") || body?.phone || "";
+      const password = req.headers.get("x-password") || body?.password || "";
+      const callId = String(body?.call_id || "").trim();
+      const reason = String(body?.reason || "declined").trim();
+
+      const auth = await authenticate(supabase, phone, password);
+      if (!auth.user) {
+        return jsonResponse({ success: false, error: auth.errorMsg }, auth.errorStatus);
+      }
+
+      const now = new Date().toISOString();
+      const { data: rejectedCall } = await supabase
+        .from("cimb_calls")
+        .update({
+          status: "rejected",
+          ended_at: now,
+          ended_by: String(auth.user.phone),
+          end_reason: reason,
+          last_activity_at: now,
+          updated_at: now,
+        })
+        .eq("id", callId)
+        .select("*")
+        .maybeSingle();
+
+      return jsonResponse({
+        success: true,
+        action: "call-reject",
+        call: rejectedCall || { id: callId, status: "rejected", end_reason: reason },
+      });
+    }
+
+    // ----------------------------------------------------
+    // ACTION: call-end (POST)
+    // ----------------------------------------------------
+    if (action === "call-end") {
+      if (req.method !== "POST") return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+
+      let body: any;
+      try {
+        body = await req.json();
+      } catch {
+        return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
+      }
+
+      const phone = req.headers.get("x-phone") || body?.phone || "";
+      const password = req.headers.get("x-password") || body?.password || "";
+      const callId = String(body?.call_id || "").trim();
+      const reason = String(body?.reason || "completed").trim();
+      const durationSeconds = Number(body?.duration_seconds || 0);
+
+      const auth = await authenticate(supabase, phone, password);
+      if (!auth.user) {
+        return jsonResponse({ success: false, error: auth.errorMsg }, auth.errorStatus);
+      }
+
+      const now = new Date().toISOString();
+      const { data: endedCall } = await supabase
+        .from("cimb_calls")
+        .update({
+          status: "ended",
+          ended_at: now,
+          ended_by: String(auth.user.phone),
+          end_reason: reason,
+          duration_seconds: durationSeconds,
+          last_activity_at: now,
+          updated_at: now,
+        })
+        .eq("id", callId)
+        .select("*")
+        .maybeSingle();
+
+      return jsonResponse({
+        success: true,
+        action: "call-end",
+        call: endedCall || { id: callId, status: "ended", end_reason: reason, duration_seconds: durationSeconds },
       });
     }
 

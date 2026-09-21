@@ -3,6 +3,7 @@ import { cimbApi } from '../api/cimbApi';
 import { CimbUser, UserProfile } from '../types';
 import { isKycVerified, isBankComplete as checkBankComplete } from '../utils/businessRules';
 import { syncPushSubscriptionWithUser } from '../lib/pushNotifications';
+import { setCustomAccessToken } from '../lib/supabase';
 
 
 interface AuthSession {
@@ -99,6 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const parsed: AuthSession = JSON.parse(stored);
           if (parsed.phone && parsed.password) {
             setSession(parsed);
+            const storedToken = localStorage.getItem('cimb_access_token');
+            if (storedToken) {
+              setCustomAccessToken(storedToken);
+            }
             const res = await cimbApi.get(parsed);
             if (res.success && res.data) {
               const freshUser = Array.isArray(res.data)
@@ -109,16 +114,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 void syncPushSubscriptionWithUser(freshUser.phone);
               } else {
                 localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem('cimb_access_token');
+                setCustomAccessToken(null);
                 setSession(null);
               }
             } else {
               localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem('cimb_access_token');
+              setCustomAccessToken(null);
               setSession(null);
             }
           }
         }
       } catch (err: unknown) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('cimb_access_token');
+        setCustomAccessToken(null);
         setSession(null);
       } finally {
         setIsLoading(false);
@@ -196,6 +207,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const authUser = Array.isArray(res.data) ? res.data[0] : res.data;
         const newSession: AuthSession = { phone: phone.trim(), password };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newSession));
+        if (res.access_token) {
+          localStorage.setItem('cimb_access_token', res.access_token);
+          setCustomAccessToken(res.access_token);
+        }
         setSession(newSession);
         setUser(authUser);
         setIsLoading(false);
@@ -222,17 +237,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
 
+    const trimmedName = name.trim();
+    const defaultAvatar = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(trimmedName)}`;
+
     try {
       const res = await cimbApi.register({
-        name: name.trim(),
+        name: trimmedName,
         phone: phone.trim(),
         password,
+        avatar: defaultAvatar,
       });
 
       if (res.success && res.data) {
-        const authUser = Array.isArray(res.data) ? res.data[0] : res.data;
+        let authUser = Array.isArray(res.data) ? res.data[0] : res.data;
+
+        // Ensure avatar is populated with the default Dicebear URL if not already set
+        if (!authUser.avatar) {
+          try {
+            const updateRes = await cimbApi.update({
+              phone: phone.trim(),
+              password,
+              data: { avatar: defaultAvatar },
+            });
+            if (updateRes.success && updateRes.data) {
+              authUser = Array.isArray(updateRes.data) ? updateRes.data[0] : updateRes.data;
+            } else {
+              authUser = { ...authUser, avatar: defaultAvatar };
+            }
+          } catch {
+            authUser = { ...authUser, avatar: defaultAvatar };
+          }
+        }
+
         const newSession: AuthSession = { phone: phone.trim(), password };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newSession));
+        if (res.access_token) {
+          localStorage.setItem('cimb_access_token', res.access_token);
+          setCustomAccessToken(res.access_token);
+        }
         setSession(newSession);
         setUser(authUser);
         setIsLoading(false);
@@ -257,6 +299,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('cimb_access_token');
+    setCustomAccessToken(null);
     setSession(null);
     setUser(null);
     setError(null);

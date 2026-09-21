@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatMYR } from '../config/loan';
 import { BillCard } from '../components/bill/BillCard';
+import { GamificationDashboard } from '../components/gamification/GamificationDashboard';
 import {
   Banknote,
   Clock,
@@ -308,6 +309,9 @@ export const LoanPage: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Gamification Full Hub (Skor Disiplin, Lencana, Rebat Maya, Milestone Kemajuan) */}
+          <GamificationDashboard user={user} compact={false} />
 
           {/* BILLS SECTION */}
           {/* Rule: If loan_is_active = true AND tidak ada bill: tampilkan "Bill sedang diproses" */}

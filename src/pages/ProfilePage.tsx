@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLiveChat } from '../context/LiveChatContext';
 import { cimbApi } from '../api/cimbApi';
 import { formatMYR } from '../config/loan';
+import { GamificationDashboard } from '../components/gamification/GamificationDashboard';
 import {
   Phone,
   Mail,
@@ -138,9 +139,18 @@ export const ProfilePage: React.FC = () => {
       {/* User Identity & Account Card (Schema: name, phone, email, role, created_at) */}
       <div className="bg-[#FFFFFF] p-5 rounded-[16px] border border-[#E4E5E8] shadow-2xs space-y-3.5">
         <div className="flex items-center space-x-3.5">
-          <div className="w-13 h-13 rounded-[16px] bg-[#FDEBEC] border border-red-200 flex items-center justify-center text-[#E31B23] font-black text-xl shadow-2xs shrink-0">
-            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-          </div>
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.name || 'Avatar'}
+              className="w-13 h-13 rounded-[16px] object-cover border border-[#E4E5E8] shadow-2xs shrink-0 bg-white"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-13 h-13 rounded-[16px] bg-[#FDEBEC] border border-red-200 flex items-center justify-center text-[#E31B23] font-black text-xl shadow-2xs shrink-0">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-2">
               <h2 className="text-base font-extrabold text-[#17181B] tracking-tight truncate">
@@ -290,6 +300,9 @@ export const ProfilePage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Gamification Hub (Credit Rep Score, Badges, Virtual Rebate, Debt Freedom) */}
+      <GamificationDashboard user={user} compact={false} />
 
       {/* KYC Status & Details Section (Schema: 19 KYC columns) */}
       <div className="bg-[#FFFFFF] rounded-[16px] border border-[#E4E5E8] p-4 shadow-2xs space-y-3">

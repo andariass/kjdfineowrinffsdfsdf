@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Banknote, WalletCards, MessageCircle } from 'lucide-react';
+import { Home, Banknote, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLiveChat } from '../../context/LiveChatContext';
 
@@ -52,26 +52,6 @@ export const BottomNav: React.FC = () => {
                 )}
               </div>
               <span className="text-[11px] mt-0.5 tracking-tight font-semibold">Pinjaman</span>
-            </>
-          )}
-        </NavLink>
-
-        <NavLink
-          to="/withdraw"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-2.5 rounded-[12px] transition-all duration-200 ${
-              isActive
-                ? 'text-[#E31B23] font-bold'
-                : 'text-[#686B73] hover:text-[#17181B] font-medium'
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <div className={`p-1.5 rounded-[12px] transition-colors ${isActive ? 'bg-[#FDEBEC] text-[#E31B23]' : ''}`}>
-                <WalletCards className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] mt-0.5 tracking-tight font-semibold">Keluarkan</span>
             </>
           )}
         </NavLink>

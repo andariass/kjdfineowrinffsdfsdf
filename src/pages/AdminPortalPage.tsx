@@ -745,6 +745,18 @@ export const AdminPortalPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0 flex items-center gap-2">
+                          {item.avatar ? (
+                            <img
+                              src={item.avatar}
+                              alt={item.name}
+                              className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0 bg-white"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-[#FDEBEC] border border-red-200 flex items-center justify-center text-[#E31B23] font-bold text-[10px] shrink-0">
+                              {item.name ? item.name.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                          )}
                           <span className="text-xs font-bold text-slate-900 truncate">{item.name}</span>
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 shrink-0">
                             {item.role}

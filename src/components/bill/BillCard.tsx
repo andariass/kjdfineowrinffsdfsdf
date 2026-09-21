@@ -119,7 +119,7 @@ export const BillCard: React.FC<BillCardProps> = ({ bill, canPay = true }) => {
           </span>
         ) : isPending ? (
           <span className="text-[11px] text-[#B86E00] font-medium">
-            Resit pengesahan sedang disemak pentadbir
+            Resit {bill.confirmation?.payment_method ? `(${bill.confirmation.payment_method === 'duitnow_qr' ? 'DuitNow QR' : 'Pindahan Bank'}) ` : ''}sedang disemak
           </span>
         ) : isInactive ? (
           <span className="text-[11px] text-[#686B73] italic">

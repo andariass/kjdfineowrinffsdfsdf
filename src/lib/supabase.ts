@@ -11,6 +11,24 @@ export const SUPABASE_ANON_KEY =
 export const SUPABASE_PUBLISHABLE_KEY = SUPABASE_ANON_KEY;
 
 let cachedClient: SupabaseClient | null = null;
+let currentAccessToken: string | null = null;
+
+export function setCustomAccessToken(token: string | null) {
+  currentAccessToken = token;
+  if (cachedClient) {
+    if (token) {
+      try {
+        cachedClient.realtime.setAuth(token);
+      } catch (e) {
+        console.warn('Failed to setAuth on Realtime:', e);
+      }
+    }
+  }
+}
+
+export function getCustomAccessToken(): string | null {
+  return currentAccessToken;
+}
 
 export function getSupabaseClient(): SupabaseClient {
   if (cachedClient) {
@@ -30,13 +48,39 @@ export function getSupabaseClient(): SupabaseClient {
     throw new Error('Supabase JS SDK failed to load.');
   }
 
+  // Check stored access token if available
+  const storedToken =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('cimb_access_token')
+      : null;
+  if (storedToken && !currentAccessToken) {
+    currentAccessToken = storedToken;
+  }
+
   cachedClient = clientFactory(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: currentAccessToken
+        ? { Authorization: `Bearer ${currentAccessToken}` }
+        : {},
+    },
     realtime: {
       params: {
         eventsPerSecond: 10,
       },
     },
   });
+
+  if (currentAccessToken && cachedClient.realtime) {
+    try {
+      cachedClient.realtime.setAuth(currentAccessToken);
+    } catch {
+      // ignore
+    }
+  }
 
   if (typeof window !== 'undefined') {
     (window as any).__cimbSupabaseClient = cachedClient;

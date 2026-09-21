@@ -6,8 +6,9 @@ import { StandalonePage } from '../components/layout/StandalonePage';
 import { AdminBottomNav } from '../components/layout/AdminBottomNav';
 import { formatMYR } from '../config/loan';
 import { Bill, CimbUser, Withdrawal } from '../types';
-import { CheckCircle2, XCircle, Clock, PlusCircle, Eye, EyeOff, AlertTriangle, Check, Layers, Sparkles, ShieldAlert, Trash2, Building, QrCode, Loader2, WalletCards, Edit3, Headphones } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, PlusCircle, Eye, EyeOff, AlertTriangle, Check, Layers, Sparkles, ShieldAlert, Trash2, Building, QrCode, Loader2, WalletCards, Edit3, Headphones, TrendingUp, Flame, Award, Gift } from 'lucide-react';
 import { isKycVerified } from '../utils/businessRules';
+import { computeGamificationProfile } from '../utils/gamification';
 
 export const SelectedUserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -466,7 +467,21 @@ export const SelectedUserPage: React.FC = () => {
             </div>
           </div>
           <div className="flex justify-between items-center gap-3 text-xs">
-            <span className="font-bold text-slate-900 text-sm truncate">{targetUser.name}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {targetUser.avatar ? (
+                <img
+                  src={targetUser.avatar}
+                  alt={targetUser.name}
+                  className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 bg-white shadow-2xs"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#FDEBEC] border border-red-200 flex items-center justify-center text-[#E31B23] font-bold text-sm shrink-0">
+                  {targetUser.name ? targetUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+              <span className="font-bold text-slate-900 text-sm truncate">{targetUser.name}</span>
+            </div>
             <span className="font-mono text-slate-600 shrink-0">{targetUser.phone}</span>
           </div>
           {targetUser.email && (
@@ -516,6 +531,55 @@ export const SelectedUserPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Gamification & Credit Rep Score for Admin Review */}
+        {(() => {
+          const gamification = computeGamificationProfile(targetUser);
+          return (
+            <section className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-[#E31B23]" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    Skor Reputasi Kredit & Disiplin
+                  </h3>
+                </div>
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                  style={{
+                    color: gamification.tierColor,
+                    backgroundColor: gamification.tierBg,
+                    borderColor: gamification.tierColor + '40',
+                  }}
+                >
+                  {gamification.repScoreTier}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <span className="text-[10px] text-slate-500 block">Skor Disiplin</span>
+                  <span className="text-base font-black text-slate-900">{gamification.repScore}</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-100">
+                  <span className="text-[10px] text-amber-800 block">Streak Bayaran</span>
+                  <span className="text-base font-black text-amber-700">{gamification.paymentStreak}x</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <span className="text-[10px] text-emerald-800 block">Poin Maya</span>
+                  <span className="text-base font-black text-emerald-700">{gamification.rewardPoints}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg">
+                <span>Kemajuan Bebas Hutang:</span>
+                <span className="font-bold text-slate-900">
+                  {gamification.repaymentProgressPercent}% ({gamification.paidBillsCount}/{gamification.totalBillsCount} bil)
+                </span>
+              </div>
+            </section>
+          );
+        })()}
 
         <section className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
